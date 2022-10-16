@@ -3,6 +3,7 @@ import Head from "next/head";
 import "../styles/globals.css";
 
 function MyApp({ Component, pageProps }: AppProps) {
+  console.log("deneme");
   return (
     <>
       <Head>
