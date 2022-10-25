@@ -1,1 +1,1 @@
-# Google Maps in React Crash Course
+# Google Maps in React to Find the Closest House
