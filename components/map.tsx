@@ -5,15 +5,21 @@ import {
   DirectionsRenderer,
   Circle,
   MarkerClusterer,
+  StreetViewService,
+  InfoWindow,
 } from "@react-google-maps/api";
 import Places from "./places";
 import Distance from "./distance";
+import { GoodPageCache } from "next/dist/client/page-loader";
 
 type LatLngLiteral = google.maps.LatLngLiteral;
 type DirectionsResult = google.maps.DirectionsResult;
 type MapOptions = google.maps.MapOptions;
 
 export default function Map() {
+  const [newHouse, setNewHouse] = useState(false);
+  const [openRightClickWindow, setOpenRightClickWindow] = useState(false);
+  const [newCorrdinates, setNewCoordinate] = useState<LatLngLiteral>();
   const [office, setOffice] = useState<LatLngLiteral>();
   const [directions, setDirections] = useState<DirectionsResult>();
   const mapRef = useRef<GoogleMap>();
@@ -25,16 +31,16 @@ export default function Map() {
     () => ({
       // mapId: "fe8cf89b201e6159",
       // disableDefaultUI: true,
-      clickableIcons: false,
+      clickableIcons: true,
       mapTypeControl: true,
-      streetViewControl: false,
+      streetViewControl: true,
       styles: [
         {
           featureType: "poi",
           elementType: "labels.icon",
           stylers: [
             {
-              visibility: "off",
+              visibility: "on",
             },
           ],
         },
@@ -51,6 +57,17 @@ export default function Map() {
 
   const onLoad = useCallback((map) => (mapRef.current = map), []);
   const houses = useMemo(() => office && generateHouses(office), [office]);
+
+  console.log(houses);
+  const rightClickHandler = (e: google.maps.MapMouseEvent) => {
+    console.log(e.latLng?.lat(), e.latLng?.lng());
+    setNewCoordinate({
+      lat: e.latLng ? e.latLng.lat() : center.lat,
+      lng: e.latLng ? e.latLng?.lng() : center.lng,
+    });
+
+    setOpenRightClickWindow(true);
+  };
 
   const fetchDirections = (house: LatLngLiteral) => {
     if (!office) return;
@@ -81,7 +98,7 @@ export default function Map() {
           }}
         />
         {!office && <p>Enter the address of your office</p>}
-      {directions && <Distance leg={directions.routes[0].legs[0]} />}
+        {directions && <Distance leg={directions.routes[0].legs[0]} />}
       </div>
       <div className="map">
         <GoogleMap
@@ -90,7 +107,42 @@ export default function Map() {
           mapContainerClassName="map-container"
           options={options}
           onLoad={onLoad}
+          onRightClick={rightClickHandler}
         >
+          {openRightClickWindow && (
+            <>
+              <InfoWindow position={newCorrdinates}>
+                <div>
+                  <div
+                    className="contextMenu"
+                    onClick={() => {
+                      setOffice(newCorrdinates);
+                      setOpenRightClickWindow(false);
+                    }}
+                  >
+                    Set Office Here
+                  </div>
+                  <div
+                    className="contextMenu"
+                    onClick={() => {
+                      newCorrdinates && houses?.push(newCorrdinates);
+                      setNewHouse(true);
+                      setOpenRightClickWindow(false);
+                    }}
+                  >
+                    Add House Here
+                  </div>
+                </div>
+              </InfoWindow>
+              {newCorrdinates && newHouse && (
+                <Marker
+                  key={newCorrdinates.lat}
+                  position={newCorrdinates}
+                  onClick={() => fetchDirections(newCorrdinates)}
+                />
+              )}
+            </>
+          )}
           {directions && (
             <DirectionsRenderer
               directions={directions}
@@ -111,7 +163,8 @@ export default function Map() {
               />
               <MarkerClusterer>
                 {(clusterer) =>
-                  houses && houses.map((house) => (
+                  houses &&
+                  houses.map((house) => (
                     <Marker
                       key={house.lat}
                       position={house}
@@ -128,6 +181,7 @@ export default function Map() {
               <Circle center={office} radius={10000} options={farOptions} />
             </>
           )}
+          <StreetViewService />
         </GoogleMap>
       </div>
     </div>

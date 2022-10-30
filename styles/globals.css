@@ -44,10 +44,22 @@ a {
 .highlight {
   font-size: 1.25rem;
   font-weight: bold;
-  color: yellowgreen
+  color: yellowgreen;
 }
 
 .combobox-input {
   width: 100%;
   padding: 0.5rem;
+}
+
+.contextMenu {
+  padding: 0 5px;
+  border-radius: 3px;
+}
+
+.contextMenu:hover {
+  background-color: lightblue;
+  cursor: pointer;
+
+  color: white;
 }
