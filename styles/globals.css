@@ -21,6 +21,7 @@ a {
 }
 
 .controls {
+  min-width: 180px;
   width: 20%;
   padding: 1rem;
   background: #14161a;
